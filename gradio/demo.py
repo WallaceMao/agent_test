@@ -1,16 +1,59 @@
+from io import StringIO
+
 import gradio as gr
 import time
 
 import gradio.utils
+from pdfminer.high_level import extract_text_to_fp
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from sentence_transformers import SentenceTransformer
+import chromadb
+
+EMBED_MODEL = SentenceTransformer('all-MiniLM-L6-v2')
+CHROMA_CLIENT = chromadb.PersistentClient(
+    path="./db/chroma_db",
+    settings=chromadb.Settings(anonymized_telemetry=False)
+)
+COLLECTION = CHROMA_CLIENT.get_or_create_collection("rag_docs")
+
+
+def extract_pdf_text(filepath: str):
+    """从pdf中提取文字"""
+    output = StringIO()
+    with open(filepath, 'rb') as file:
+        extract_text_to_fp(file, output)
+    return output.getvalue()
 
 
 def process_pdf(file: gradio.utils.NamedString, progress=gr.Progress()):
-    progress(0.2, desc="111")
-    print(f"===> {file.name}")
-    time.sleep(1)
-    progress(0.5, desc="2222")
-    time.sleep(1)
-    progress(1.0, desc="完成")
+    """处理上传的pdf文件"""
+    try:
+        progress(0.2, desc="解析PDF...")
+        print(f"===> {file.name}")
+        text = extract_pdf_text(file.name)
+
+        progress(0.4, desc="分隔文本...")
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=800, chunk_overlap=50)
+        chunks = text_splitter.split_text(text)
+
+        progress(0.6, desc="生成嵌入...")
+        embeddings = EMBED_MODEL.encode(chunks)
+
+        progress(0.8, desc="存储向量...")
+        existed_ids = COLLECTION.get()['ids']
+        if existed_ids:
+            COLLECTION.delete(ids=existed_ids)
+        ids = [str(i) for i in range(len(chunks))]
+        COLLECTION.add(
+            ids=ids,
+            embeddings=embeddings,
+            documents=chunks
+        )
+
+        progress(1.0, desc="完成")
+        return f"PDF处理完成，已存储{len(chunks)}个文本块"
+    except Exception as e:
+        return f"处理失败： {str(e)}"
 
 
 with gr.Blocks(
