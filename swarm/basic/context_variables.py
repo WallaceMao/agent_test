@@ -16,45 +16,33 @@ def instructions(variables: dict):
 def print_account_details(variables: dict):
     user_id = variables.get("user_id", None)
     name = variables.get("name", None)
-    print(f"account detail: {name}, {user_id}")
+    print(f"====> account detail: {name}, {user_id}")
     return "success"
 
 
 agent = Agent(
     name="Agent",
-    model=os.environ.get("SWARM_DEFAULT_MODEL"),
+    model=os.environ.get("DEFAULT_MODEL"),
     instructions=instructions,
     functions=[print_account_details]
 )
 
 
 context_variables = {"name": "Wallace", "user_id": 98989}
-stream = client.run(
+response = client.run(
     agent=agent,
     messages=[{"role": "user", "content": "你好！"}],
     context_variables=context_variables,
-    stream=True,
+    stream=False,
     debug=True)
 
-# 返回结果
-full_answer = ""
-for chunk in stream:
-    if "response" in chunk:
-        full_answer = chunk.get('response', 'no data')
+print(f"---> 你好： {response.messages[-1]['content']}")
 
-print(full_answer)
-
-stream = client.run(
-    agent=agent,
-    messages=[{"role": "user", "content": "print my account detail!"}],
-    context_variables=context_variables,
-    stream=True,
-    debug=True)
-
-# 返回结果
-full_answer = ""
-for chunk in stream:
-    if "response" in chunk:
-        full_answer = chunk.get('response', 'no data')
-
-print(full_answer)
+# response = client.run(
+#     agent=agent,
+#     messages=[{"role": "user", "content": "print my account detail!"}],
+#     context_variables=context_variables,
+#     stream=False,
+#     debug=True)
+#
+# print(f"---> 打印账户信息： {response.messages[-1]['content']}")

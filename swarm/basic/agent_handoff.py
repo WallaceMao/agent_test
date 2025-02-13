@@ -8,13 +8,13 @@ client = Swarm()
 
 english_agent = Agent(
     name="English Agent",
-    model=os.environ.get("SWARM_DEFAULT_MODEL"),
+    model=os.environ.get("DEFAULT_MODEL"),
     instructions="You only speak English. 你只会说英语。"
 )
 
 chinese_agent = Agent(
     name="Chinese Agent",
-    model=os.environ.get("SWARM_DEFAULT_MODEL"),
+    model=os.environ.get("DEFAULT_MODEL"),
     instructions="You only speak Chinese. 你只会说汉语。"
 )
 
@@ -28,12 +28,15 @@ english_agent.functions.append(transfer_to_chinese_agent)
 
 
 messages = [{"role": "user", "content": "你好，你是谁？"}]
-stream = client.run(agent=english_agent, messages=messages, stream=True, debug=True)
+response = client.run(agent=english_agent, messages=messages, stream=False, debug=True)
 
 # 返回结果
-full_answer = ""
-for chunk in stream:
-    if "response" in chunk:
-        full_answer = chunk.get('response', 'no data')
+print(response.messages[-1]["content"])
 
-print(full_answer)
+# # 返回结果
+# full_answer = ""
+# for chunk in stream:
+#     if "response" in chunk:
+#         full_answer = chunk.get('response', 'no data')
+#
+# print(full_answer)

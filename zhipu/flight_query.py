@@ -105,7 +105,7 @@ tools = [
 
 messages = []
  
-messages.append({"role": "system", "content": "不要假设或猜测传入函数的参数值。如果用户的描述不明确，请要求用户提供必要信息"})
+messages.append({"role": "system", "content": "不要假设或猜测传入函数的参数值。如果用户的描述不明确，请要求用户提供必要信息。今天是2025年2月13日"})
 messages.append({"role": "user", "content": "帮我查询今天，上海去北京的飞机"})
 response = client.chat.completions.create(
     model=MODEL,  # 填写需要调用的模型名称
